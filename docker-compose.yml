@@ -1,0 +1,56 @@
+version: "3.8"
+
+services:
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        image: brand-app
+        container_name: brand-app
+        restart: unless-stopped
+        working_dir: /var/www
+        volumes:
+            - ./:/var/www
+            - ./vendor:/var/www/vendor
+            - ./storage:/var/www/storage
+        environment:
+            - APP_ENV=local
+            - APP_DEBUG=1
+            - APP_KEY=base64:dummykey
+            - DB_HOST=db
+            - DB_DATABASE=brand_db
+            - DB_USERNAME=brand
+            - DB_PASSWORD=secret
+        depends_on:
+            - db
+        ports:
+            - "9000:9000"
+
+    webserver:
+        image: nginx:alpine
+        container_name: nginx
+        restart: unless-stopped
+        ports:
+            - "8000:80"
+        volumes:
+            - ./:/var/www
+            - ./docker/nginx/conf.d/:/etc/nginx/conf.d/
+        depends_on:
+            - app
+
+    db:
+        image: mysql:8.0
+        container_name: mysql
+        restart: unless-stopped
+        environment:
+            MYSQL_DATABASE: laravel
+            MYSQL_ROOT_PASSWORD: secret
+            MYSQL_USER: laravel
+            MYSQL_PASSWORD: secret
+        ports:
+            - "3306:3306"
+        volumes:
+            - dbdata:/var/lib/mysql
+
+volumes:
+    dbdata:
